@@ -8,28 +8,38 @@ uniform vec2 u_resolution;
 uniform float u_time;
 
 
+float random() { return fract(sin(u_time) * 100000.); }
+float random(float seed) { return fract(sin(seed) * 100000.); }
+
+vec2 particlePos(float seed, float time) {
+  float this_startProgress = random(seed + .1);
+  float this_speed = random(seed + .2) * 20. + 5.;
+  float this_amplitude = random(seed + .3) * .2;
+  float this_yshift = random(seed + .4) * .5 - .25;
+  float progress = fract(this_startProgress + (time / 4.));
+
+  return vec2(
+    progress * 1.1 - 0.05, // go off left and right edge a little bit
+    0.5 + this_yshift + (this_amplitude * sin(progress * 2. * PI))
+  ) * u_resolution;
+}
+
+
 void main() {
   vec2 st = gl_FragCoord.xy / u_resolution;
 
-  float progress = (fract(u_time / 4.)
-    // Go off bounds a little bit on each side
-    * 1.1 - 0.05)
-    // Range from 0 to 2PI
-    * 2. * PI;
+  vec3 color = vec3(0., 0., 0.);
 
-  vec2 center = vec2(
-    // Moves across the screen horizontally, repeats
-    progress / (2. * PI),
-    // Moves up and down, centered
-    0.5 + (200./u_resolution.y) * sin(progress)
-  ) * u_resolution;
-  float distanceFromCenter = distance(gl_FragCoord.xy, center);
+  float seed = 4.;
+  float radius = random(seed) * 15. + 5.;
+  vec2 center = particlePos(seed, u_time);
 
-  float lightness = smoothstep(29., 31., distanceFromCenter);
-  vec3 color = mix(
+  float inCircle = smoothstep(radius - 1., radius + 1., distance(gl_FragCoord.xy, center));
+
+  color = mix(
     vec3(1., 1., 1.),
     vec3(0., 0., 0.),
-    lightness
+    inCircle
   );
 
   gl_FragColor = vec4(color, 1.);
