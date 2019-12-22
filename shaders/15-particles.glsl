@@ -19,10 +19,10 @@ void setup() {
   for (int i = 0; i < numParticles; i++) {
     float seed = float(i);
     particles[i] = vec4(
-      random(seed + .1),            // opacity
-      random(seed + .2) * 20. + 5., // speed
-      random(seed + .3) * .15,      // amplitude
-      random(seed + .8) * .3 - .15  // y shift
+      random(seed + .1),              // opacity
+      random(seed + .2) * .25 + 0.05, // speed
+      random(seed + .3) * .15,        // amplitude
+      random(seed + .8) * .3 - .15    // y shift
     );
     // startProgress is given by (i/numParticles)
     // Where does radius come from?
@@ -36,7 +36,7 @@ vec2 particlePos(vec4 particle, int index, float time) {
   float this_speed = particle[1];
   float this_amplitude = particle[2];
   float this_yshift = particle[3];
-  float progress = fract(this_startProgress + (time / 4.));
+  float progress = fract(this_startProgress + (time * this_speed));
 
   return vec2(
     progress * 1.1 - 0.05, // go off left and right edge a little bit
