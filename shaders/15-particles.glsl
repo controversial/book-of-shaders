@@ -1,5 +1,5 @@
 #ifdef GL_ES
-precision mediump float;
+precision lowp float;
 #endif
 
 #define PI 3.141592653
@@ -8,15 +8,34 @@ uniform vec2 u_resolution;
 uniform float u_time;
 
 
-float random() { return fract(sin(u_time) * 100000.); }
 float random(float seed) { return fract(sin(seed) * 100000.); }
 
 
-vec2 particlePos(float seed, float time) {
-  float this_startProgress = random(seed + .5);
-  float this_speed = random(seed + .6) * 20. + 5.;
-  float this_amplitude = random(seed + .7) * .15;
-  float this_yshift = random(seed + .8) * .3 - .15;
+const int numParticles = 50;
+vec4 particles[numParticles];
+
+bool has_setup = false;
+void setup() {
+  for (int i = 0; i < numParticles; i++) {
+    float seed = float(i);
+    particles[i] = vec4(
+      random(seed + .1),            // opacity
+      random(seed + .2) * 20. + 5., // speed
+      random(seed + .3) * .15,      // amplitude
+      random(seed + .8) * .3 - .15  // y shift
+    );
+    // startProgress is given by (i/numParticles)
+    // Where does radius come from?
+  }
+  has_setup = true;
+}
+
+
+vec2 particlePos(vec4 particle, int index, float time) {
+  float this_startProgress = float(index) / float(numParticles);
+  float this_speed = particle[1];
+  float this_amplitude = particle[2];
+  float this_yshift = particle[3];
   float progress = fract(this_startProgress + (time / 4.));
 
   return vec2(
@@ -27,7 +46,7 @@ vec2 particlePos(float seed, float time) {
 
 
 void main() {
-  vec2 st = gl_FragCoord.xy / u_resolution;
+  if (!has_setup) setup();
 
   vec3 color = vec3(0., 0., 0.);
 
@@ -36,11 +55,11 @@ void main() {
   vec2 center;
   float inCircle;
 
-  for (float seed = 0.; seed < 100.; seed += 1.) {
-    radius = random(seed) * 15. + 5.;
-    opacity = random(seed + .1);
-    center = particlePos(seed, u_time);
-    inCircle = smoothstep(radius - 1., radius + 1., distance(gl_FragCoord.xy, center));
+  for (int i = 0; i < numParticles; i += 1) {
+    radius = 20.;
+    opacity = particles[i][0];
+    center = particlePos(particles[i], i, u_time);
+    inCircle = smoothstep(radius - 1., radius + 1., distance(center, gl_FragCoord.xy));
     color += mix(
       vec3(opacity, opacity, opacity),
       vec3(0., 0., 0.),
