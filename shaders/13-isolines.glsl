@@ -9,8 +9,8 @@ precision mediump float;
 uniform vec2 u_resolution;
 uniform float u_time;
 
-//	Simplex 3D Noise
-//	by Ian McEwan, Ashima Arts
+// Simplex 3D Noise
+// by Ian McEwan, Ashima Arts
 vec4 permute(vec4 x){return mod(((x*34.0)+1.0)*x, 289.0);}
 vec4 taylorInvSqrt(vec4 r){return 1.79284291400159 - 0.85373472095314 * r;}
 float snoise(vec3 v) {
@@ -61,12 +61,17 @@ float snoise(vec3 v) {
 }
 
 void main() {
+  // Standard coordinates - square coordinates placing (0, 0) at the bottom left
+  // and scaling by height
   vec2 st = gl_FragCoord.xy / u_resolution.y;
 
+  // The field whose gradient we will trace is random animated noise mixed with
+  // a radial gradient from the bottom left corner
   float noise = snoise(vec3(st.x, u_time / 5., st.y));
   float gradient = distance(vec2(0., 0.), st);
   float field = mix(noise, gradient, .9);
 
+  // Divide the continuous field into 15 repeating "steps" by modulus division
   float numLines = 15.;
   float steps = fract(field * numLines);
   // Convert sawtooth "steps" signal (/|/|) into triangle signal (/\/\)
@@ -78,21 +83,22 @@ void main() {
 
   // Normalize by dividing by the derivative - get uniform lines
   float lines = bumps / fwidth(field * numLines);
-
   // Increase width of lines
-
   float weight = 25.;
   lines /= weight;
   // Harder edges on the lines
   lines = smoothstep(.48, .52, lines);
+  // Transform to nice white lines on black background
   lines = clamp(lines, 0., 1.);
   lines = 1. - lines;
 
+  // Make a colorful gradient lined up with the field
   float diag = (st.x + (1. - st.y)) / 2.;
   vec3 colorA = vec3(.61, .48, 1.);
   vec3 colorB = vec3(.47, .57, 1.);
   vec3 colors = mix(colorA, colorB, field);
 
+  // Add a color where there aren't any lines
   vec3 background = (1. - lines) * vec3(0.05, 0.05, 0.08);
 
   gl_FragColor = vec4(lines * colors + background, 1);
