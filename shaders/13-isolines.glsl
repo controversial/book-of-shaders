@@ -91,7 +91,9 @@ void main() {
   float diag = (st.x + (1. - st.y)) / 2.;
   vec3 colorA = vec3(.61, .48, 1.);
   vec3 colorB = vec3(.47, .57, 1.);
-  vec3 colorGradient = mix(colorA, colorB, gradient);
+  vec3 colors = mix(colorA, colorB, field);
 
-  gl_FragColor = vec4(vec3(lines * colorGradient), 1);
+  vec3 background = (1. - lines) * vec3(0.05, 0.05, 0.08);
+
+  gl_FragColor = vec4(lines * colors + background, 1);
 }
